@@ -50,17 +50,29 @@
 
     #err-overlay {
       display: none; position: fixed; inset: 0;
-      background: #000; color: #f88; font-size: 18px;
+      background: #060610; color: #e0e0f0; font-size: 16px;
       align-items: center; justify-content: center;
-      text-align: center; padding: 40px; flex-direction: column; gap: 12px;
+      text-align: center; padding: 40px; flex-direction: column; gap: 16px;
     }
-    #err-overlay code { font-size: 12px; color: #f44; }
+    #err-overlay h2 { font-size: 22px; color: #f88; }
+    #err-overlay p  { color: #aaa; font-size: 14px; max-width: 340px; line-height: 1.6; }
+    #err-overlay code { font-size: 11px; color: #666; }
+    #open-btn {
+      margin-top: 8px; padding: 12px 28px;
+      background: #4040cc; border: none; border-radius: 8px;
+      color: #fff; font-size: 15px; cursor: pointer; text-decoration: none;
+      display: inline-block;
+    }
+    #open-btn:hover { background: #5555ee; }
   </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <div id="err-overlay">
-  <div>⚠️ Couldn't initialise WebGL float framebuffers.</div>
+  <h2>⚗️ WebGL Required</h2>
+  <p>This simulation uses the GPU and needs WebGL, which isn't available in this browser.<br><br>
+  If you're viewing this inside WhatsApp or another app, try opening it in <strong>Chrome</strong> or <strong>Firefox</strong> instead.</p>
+  <a id="open-btn" href="https://mmeyer2k.github.io/gray-scott/" target="_blank">Open in Browser</a>
   <code id="err-msg"></code>
 </div>
 
