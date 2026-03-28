@@ -163,13 +163,12 @@ let FMT_INTERNAL, FMT_TYPE;   // texture format / type for ping-pong
   gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
   if (gl) {
     isGL2 = true;
-    // EXT_color_buffer_float enables rendering to RGBA32F / RGBA16F
+    gl.getExtension('OES_texture_float_linear'); // enables linear filtering of float textures
     if (gl.getExtension('EXT_color_buffer_float')) {
       FMT_INTERNAL = gl.RGBA32F;
       FMT_TYPE     = gl.FLOAT;
       if (testFBO()) { document.getElementById('dbg').textContent = 'WebGL2 RGBA32F'; return; }
     }
-    // Half-float fallback (RGBA16F is often available even without the ext)
     gl.getExtension('EXT_color_buffer_half_float');
     FMT_INTERNAL = gl.RGBA16F;
     FMT_TYPE     = gl.HALF_FLOAT;
@@ -181,8 +180,8 @@ let FMT_INTERNAL, FMT_TYPE;   // texture format / type for ping-pong
   if (!gl) fatal('No WebGL support found in this browser.');
   isGL2 = false;
 
-  // Try full float
   const ef = gl.getExtension('OES_texture_float');
+  gl.getExtension('OES_texture_float_linear');
   gl.getExtension('WEBGL_color_buffer_float');
   if (ef) {
     FMT_INTERNAL = gl.RGBA;
@@ -190,7 +189,6 @@ let FMT_INTERNAL, FMT_TYPE;   // texture format / type for ping-pong
     if (testFBO()) { document.getElementById('dbg').textContent = 'WebGL1 FLOAT'; return; }
   }
 
-  // Try half-float
   const eh = gl.getExtension('OES_texture_half_float');
   gl.getExtension('OES_texture_half_float_linear');
   if (eh) {
@@ -316,14 +314,14 @@ function bindQuad(prog) {
 let textures = [], fbos = [], simW = 0, simH = 0, current = 0;
 
 function mkTex(w, h, data) {
-  // Nearest when no linear extension; linear otherwise
-  const filter = gl.LINEAR;
   const t = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, t);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+  // NEAREST is safe and avoids float-linear extension requirement for the sim pass.
+  // The display shader upscales with a smoothstep so pixelation isn't visible.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texImage2D(gl.TEXTURE_2D, 0, FMT_INTERNAL, w, h, 0, gl.RGBA, FMT_TYPE, data || null);
   return t;
 }
@@ -343,7 +341,7 @@ function initSim(w, h) {
   const d = new Float32Array(w * h * 4);
   for (let i = 0; i < w * h; i++) { d[i*4] = 1.0; d[i*4+3] = 1.0; }
 
-  const cx = w >> 1, cy = h >> 1, r = Math.round(Math.min(w,h) * 0.04);
+  const cx = w >> 1, cy = h >> 1, r = Math.round(Math.min(w,h) * 0.08);
   for (let y = cy - r; y <= cy + r; y++) {
     for (let x = cx - r; x <= cx + r; x++) {
       if (x < 0 || x >= w || y < 0 || y >= h) continue;
